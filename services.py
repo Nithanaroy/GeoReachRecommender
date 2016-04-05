@@ -26,6 +26,17 @@ def business():
     return cursor_tojson(business_in_loc(nelat, nelong, swlat, swlong), 'bids')
 
 
+@app.route('/<bids>/info')
+def bizinfo(bids):
+    """
+    Fetches the info about businesses
+    :param bids: comma separated list of business IDs
+    :return: JSON list of business objects
+    """
+    query = {'_id': {'$in': map(lambda x: x.strip(), bids.split(','))}}
+    return cursor_tojson(db.business.find(query), 'about')
+
+
 @app.route('/<bid>/reviewers')
 def reviewers(bid):
     """
@@ -65,12 +76,13 @@ def recommend(uid):
     (2) For each of those businesses find the shortest path from user node
     (3) Rank these paths and return the top 10
     :param uid: user id as a string
-    :return: top 10 business recommendations
+    :return: top 10 business recommendations. Complete business object is sent
     """
     nelat, nelong, swlat, swlong = get_coords_from_request()
     unvisited_biz = biz_not_visited(nelat, nelong, swlat, swlong, uid)
     ranked_paths = sorted(paths_to_biz(uid, unvisited_biz), rank)[:11]  # return best 10
-    return jsonify({"try": map(lambda b: b.end_node.properties['id'], ranked_paths)})
+    # ranked_paths = sorted(paths_to_biz(uid, ['15LrCqlaxoKSzwL7dD0bnA']), rank)[:11]  # test call
+    return bizinfo(','.join(map(lambda b: b.end_node.properties['id'], ranked_paths)))
 
 
 def rank(p1, p2):

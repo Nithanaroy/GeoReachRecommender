@@ -2,16 +2,22 @@
 {% block title %}Naive approach{% endblock %}
 {% block content %}
     <div ng-app="rec">
-        <form ng-controller="recController">
-            <div class="form-group">
-                <label for="user">User</label>
-                <input type="text" class="form-control" id="user" ng-model="user" placeholder="User ID" autofocus>
-            </div>
-            <div class="form-group" id="map_canvas" ng-show="settings.showMap" style="height: 500px;">
-            </div>
-            <button type="button" class="btn btn-default"
-                    ng-click="markVisited()">{{ settings.formBtn|angular }}</button>
-        </form>
+        <div ng-controller="recController">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="user">User</label>
+                    <input type="text" style="width: 300px;" class="form-control" id="user" ng-model="user"
+                           placeholder="User ID" autofocus>
+                </div>
+                <button type="button" class="btn btn-primary" ng-click="markVisited()">(1) See Visited</button>
+            </form>
+            <br/>
+            <form>
+                <h2>(2) Mark region of interest</h2>
+                <div class="form-group" id="map_canvas" style="height: 500px;"></div>
+                <button type="button" class="btn btn-success" ng-click="handleFormSubmit()">(3) Recommend</button>
+            </form>
+        </div>
     </div>
     <script type="text/javascript" src="/static/node_modules/angular/angular.min.js"></script>
     <script type="text/javascript"
@@ -57,29 +63,46 @@
                     })
                 }
 
-                // TODO: Use R to find recommendations
+                $scope.recommend = function () {
+                    let url = `/${$scope.user}/recommend`;
+                    let config = {
+                        params: getRegionBounds(R)
+                    }
+                    $http.get(url, config).success(function (businesses) {
+                        // list of business objects if returned
+                        addMarkers(businesses.about, false, recommendedBusinessMarkerImage, recommendedBusinessMarkerShape);
+                    }).error(function (data) {
+                        l.error({message: 'Error recommending businesses for a user', data: data});
+                    })
+                }
+
+                $scope.handleFormSubmit = function () {
+                    if (R) {
+                        $scope.recommend();
+                    }
+                    else {
+                        $scope.markVisited();
+                    }
+                }
             });
 
             // Google Map Setup
             const mapOptions = {
                 zoom: 2,
-                center: new google.maps.LatLng(37.705042225002245, -73.6102808125),
+                center: new google.maps.LatLng(33.504220229503886, -112.19151860546874),
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 disableDoubleClickZoom: true // This event is used to remove a rectangle / query window
             };
 
             let map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
             var drawingManager = new google.maps.drawing.DrawingManager({
-                drawingMode: google.maps.drawing.OverlayType.MARKER,
+                drawingMode: null,
                 drawingControl: true,
                 drawingControlOptions: {
                     position: google.maps.ControlPosition.TOP_CENTER,
                     drawingModes: [
                         google.maps.drawing.OverlayType.RECTANGLE
                     ]
-                },
-                markerOptions: {
-                    icon: 'images/beachflag.png'
                 },
                 rectangleOptions: {
                     editable: true,
@@ -90,13 +113,30 @@
 
             let R = null;
             google.maps.event.addListener(drawingManager, 'rectanglecomplete', function (rectangle) {
-                R = getRegionBounds(rectangle);
+                if (R) R.setMap(null); // clear existing rectangle
+                R = rectangle;
+                drawingManager.setDrawingMode(null);
+                // map.fitBounds(R.getBounds());
 
                 google.maps.event.addListener(rectangle, 'dblclick', function (e) {
                     this.setMap(null); // remove the rectangle
+                    R = null;
                 });
             });
 
+            const recommendedBusinessMarkerImage = {
+                url: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                // This marker is 20 pixels wide by 32 pixels high.
+                size: new google.maps.Size(20, 32),
+                // The origin for this image is (0, 0).
+                origin: new google.maps.Point(0, 0),
+                // The anchor for this image is the base of the flagpole at (0, 32).
+                anchor: new google.maps.Point(0, 32)
+            };
+            const recommendedBusinessMarkerShape = {
+                coords: [1, 1, 1, 20, 18, 20, 18, 1],
+                type: 'poly'
+            };
 
             let markers = []
             let infowindow = new google.maps.InfoWindow({
@@ -110,14 +150,18 @@
                 loc: [-112.0686202, 33.4521542],
                 name: "Mi Amigo's Mexican Grill"
                 stars: 3}
-             * @param businesses an array of businesses
+             * @param businesses an array of business objects
              */
-            function addMarkers(businesses) {
-                clearMarkers();
+            function addMarkers(businesses, clearExisting=true, image=null, shape=null) {
+                if (clearExisting)
+                    clearMarkers();
+                let bounds = new google.maps.LatLngBounds();
                 for (let b of businesses) {
                     let marker = new google.maps.Marker({
                         position: {lat: b.loc[1], lng: b.loc[0]},
                         map: map,
+                        icon: image,
+                        shape: shape,
                         title: b.name,
                         content: `<strong>Name</strong>: ${b.name}<br/><strong>Stars</strong>: ${b.stars}`
                     });
@@ -126,7 +170,9 @@
                         infowindow.open(map, marker);
                     });
                     markers.push(marker);
+                    bounds.extend(marker.position);
                 }
+                map.fitBounds(bounds); // zoom map to fit all markers
             }
 
             /**
