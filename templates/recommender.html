@@ -1,0 +1,160 @@
+{% extends "index.html" %}
+{% block title %}Naive approach{% endblock %}
+{% block content %}
+    <div ng-app="rec">
+        <form ng-controller="recController">
+            <div class="form-group">
+                <label for="user">User</label>
+                <input type="text" class="form-control" id="user" ng-model="user" placeholder="User ID" autofocus>
+            </div>
+            <div class="form-group" id="map_canvas" ng-show="settings.showMap" style="height: 500px;">
+            </div>
+            <button type="button" class="btn btn-default"
+                    ng-click="markVisited()">{{ settings.formBtn|angular }}</button>
+        </form>
+    </div>
+    <script type="text/javascript" src="/static/node_modules/angular/angular.min.js"></script>
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&v=3.exp&signed_in=false&libraries=visualization,drawing"></script>
+    <script type="text/javascript">
+        // Utils
+        class Logger {
+            constructor() {
+
+            }
+
+            info(e) {
+                console.log(e.message, e.data)
+            }
+
+            warn(e) {
+                console.log(e.message, e.data)
+            }
+
+            error(e) {
+                console.log(e.message, e.data)
+            }
+        }
+    </script>
+    <script type="text/javascript">
+        (function () {
+            let app = angular.module('rec', []);
+            let l = new Logger()
+            const defaults = {
+                showMap: true,
+                formBtn: 'Submit'
+            }
+            app.controller('recController', function ($scope, $http) {
+                $scope.settings = defaults;
+                $scope.user = '2AGGIi5EiVLM1XhBXaaAVw';
+
+                $scope.markVisited = function () {
+                    let url = `/${$scope.user}/reviews`
+                    $http.get(url).success(function (data) {
+                        addMarkers(data.reviewed);
+                    }).error(function (data) {
+                        l.error({message: 'Error during fetching reviewed businesses for a user', data: data});
+                    })
+                }
+
+                // TODO: Use R to find recommendations
+            });
+
+            // Google Map Setup
+            const mapOptions = {
+                zoom: 2,
+                center: new google.maps.LatLng(37.705042225002245, -73.6102808125),
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                disableDoubleClickZoom: true // This event is used to remove a rectangle / query window
+            };
+
+            let map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+            var drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.MARKER,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [
+                        google.maps.drawing.OverlayType.RECTANGLE
+                    ]
+                },
+                markerOptions: {
+                    icon: 'images/beachflag.png'
+                },
+                rectangleOptions: {
+                    editable: true,
+                    draggable: true
+                }
+            });
+            drawingManager.setMap(map);
+
+            let R = null;
+            google.maps.event.addListener(drawingManager, 'rectanglecomplete', function (rectangle) {
+                R = getRegionBounds(rectangle);
+
+                google.maps.event.addListener(rectangle, 'dblclick', function (e) {
+                    this.setMap(null); // remove the rectangle
+                });
+            });
+
+
+            let markers = []
+            let infowindow = new google.maps.InfoWindow({
+                content: ''
+            });
+
+            /**
+             * Adds a marker for every business passed in the list on the map
+             * Each business object should be of the form:
+             * {_id: "-lOSaCuBRAvX5JBifx-EMw"
+                loc: [-112.0686202, 33.4521542],
+                name: "Mi Amigo's Mexican Grill"
+                stars: 3}
+             * @param businesses an array of businesses
+             */
+            function addMarkers(businesses) {
+                clearMarkers();
+                for (let b of businesses) {
+                    let marker = new google.maps.Marker({
+                        position: {lat: b.loc[1], lng: b.loc[0]},
+                        map: map,
+                        title: b.name,
+                        content: `<strong>Name</strong>: ${b.name}<br/><strong>Stars</strong>: ${b.stars}`
+                    });
+                    marker.addListener('click', function () {
+                        infowindow.setContent(marker.content);
+                        infowindow.open(map, marker);
+                    });
+                    markers.push(marker);
+                }
+            }
+
+            /**
+             * Clears all markers on the map
+             */
+            function clearMarkers() {
+                for (let m of markers) {
+                    m.setMap(null);
+                }
+                markers = [];
+            }
+
+            /**
+             * Fetches the bounds of rectangle region drawn on map
+             * @param rectangle rectangle instance
+             * @returns {swlong: *, swlat: *, nelong: *, nelat: *}
+             */
+            function getRegionBounds(rectangle) {
+                var bounds = rectangle.getBounds();
+
+                var data = {
+                    swlong: bounds.getSouthWest().lng(), swlat: bounds.getSouthWest().lat(),
+                    nelong: bounds.getNorthEast().lng(), nelat: bounds.getNorthEast().lat()
+                }
+                return data;
+            }
+        })();
+    </script>
+
+
+{% endblock %}

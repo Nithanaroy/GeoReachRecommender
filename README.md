@@ -19,6 +19,9 @@ businesses on Yelp.
 - Start Python Flask server
 - Perform Queries!
 
+Before we begin, rename `secrets_template.py` to `secrets.py` and fill in your values. Otherwise the code
+will not run.
+
 ###Import data into MongoDB and Neo4J
 ####Mongo Setup
 
@@ -55,3 +58,9 @@ lines/reviews into train and test data. For this you can use the script train_te
 Use the script `import_into_neo.py` to import users, businesses, relationships among users and 
 relationships between users and businesses. Make necessary changes to connect to right DB and chunk 
 size (in the `insert()` method). Start with an empty database to avoid duplicates. 
+
+
+###Start Flask Server
+
+Obtain a Google Maps API key and set its value to an environment variable, `maps_api_key`. Install required node
+modules by running `npm install` in the `static/` folder.

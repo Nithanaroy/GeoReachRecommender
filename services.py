@@ -1,9 +1,15 @@
+import os
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from py2neo import Graph
 from bson.json_util import dumps
+from html_services import html_api
+from flask.ext.triangle import Triangle
+import secrets
 
 app = Flask(__name__)
+Triangle(app)
+app.register_blueprint(html_api)
 
 
 @app.route('/business')
@@ -29,6 +35,20 @@ def reviewers(bid):
     """
     query = "MATCH (n:Person)-[:REVIEWED]->(b:Business {id: '%s'}) RETURN COLLECT(n.id);" % (bid,)
     return jsonify({'uids': graph.cypher.execute_one(query)})
+
+
+@app.route('/<uid>/reviews')
+def reviews(uid):
+    """
+    Fetches the list of businesses the user has reviewed
+    Each `biz_obj` below has at least _id, name, location [longitude, latitude], stars
+    :param uid: id of the user as a string
+    :return: {reviewed: [{biz_obj}, {biz_obj}...]}
+    """
+    query = "MATCH (:Person {id: {uid}})-->(b:Business) RETURN COLLECT(DISTINCT b.id)"
+    bids = graph.cypher.execute_one(query, uid=uid)
+    businesses = db.business.find({"_id": {"$in": bids}})
+    return cursor_tojson(businesses, 'reviewed')
 
 
 @app.route('/<uid>/recommend')
@@ -139,6 +159,7 @@ def cursor_tojson(cursor, key):
 
 
 if __name__ == '__main__':
+    secrets.dev()  # set dev environment settings
     db = MongoClient().yelpdata
-    graph = Graph("http://neo4j:1234@localhost:7474/db/data/")  # TODO: Get from environment
+    graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password']))
     app.run(debug=True)

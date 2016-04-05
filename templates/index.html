@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} : Recommender</title>
+    <link rel="stylesheet" type="text/css" href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css">
+    {% endblock %}
+</head>
+<body>
+<div class="container-fluid">
+    <div class="page-header">
+        <h1>Socio-Spatial Recommender
+            <small>For Yelp Dataset</small>
+        </h1>
+    </div>
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

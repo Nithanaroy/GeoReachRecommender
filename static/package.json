@@ -1,0 +1,27 @@
+{
+  "name": "recommender",
+  "version": "1.0.0",
+  "description": "Recommendation system using socio-spatial graph",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nithanaroy/GeoReachRecommender.git"
+  },
+  "keywords": [
+    "graph",
+    "recommendation"
+  ],
+  "author": "Nitin Pasumarthy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Nithanaroy/GeoReachRecommender/issues"
+  },
+  "homepage": "https://github.com/Nithanaroy/GeoReachRecommender#readme",
+  "dependencies": {
+    "angular": "^1.5.3",
+    "bootstrap": "^3.3.6"
+  }
+}
