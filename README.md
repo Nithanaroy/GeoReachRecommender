@@ -20,14 +20,18 @@ businesses on Yelp.
 - Perform Queries!
 
 ###Import data into MongoDB and Neo4J
+####Mongo Setup
+
+**Import Businesses**
+
 The data from yelp dataset has to be modified to create spatial indices in MongoDB. Use the script in
-data_cleansing folder, fix_business.py to generate a json array. Made necessary changes when calling the `main()` function 
+data_prep folder, fix_business.py to generate a json array. Make necessary changes when calling the `main()` function 
 in the file. Then use `mongoimport` command to import this data into MongoDB.
 
 `mongoimport --db yelpdata --collection business --jsonArray --file out.json`
 
 Here I am using `yelpdata` as the database, `business` as the collection and connecting to default MongoDB server.
-Now we create a `2D` index on the `loc` attribute in the `business` collection.
+Now we create a `2D` index on the `loc` attribute in the `business` collection using Mongo Command Prompt.
 
 `db.business.createIndex({"loc":"2d"})`
 
@@ -36,3 +40,18 @@ Let us check if everything works by issuing a box query on `business` collection
 `db.business.find({
     loc: { $geoWithin: { $box:  [ [ -111.9504, 33.4072 ], [ -111.8988, 33.4360 ] ] } }
 })`
+
+
+
+**Import Reviews**
+
+
+
+####Train and Test data
+We will use reviews to test the accuracy of our system. Split the review.json file which has roughly 2 million
+lines/reviews into train and test data. For this you can use the script train_test_split.py in the `data_prep` folder.
+
+####Neo4J Setup
+Use the script `import_into_neo.py` to import users, businesses, relationships among users and 
+relationships between users and businesses. Make necessary changes to connect to right DB and chunk 
+size (in the `insert()` method). Start with an empty database to avoid duplicates. 
