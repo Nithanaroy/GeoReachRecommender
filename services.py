@@ -6,6 +6,7 @@ from bson.json_util import dumps
 from html_services import html_api
 from flask.ext.triangle import Triangle
 import secrets
+from py2neo.packages.httpstream import http
 
 app = Flask(__name__)
 Triangle(app)
@@ -80,9 +81,33 @@ def recommend(uid):
     """
     nelat, nelong, swlat, swlong = get_coords_from_request()
     unvisited_biz = biz_not_visited(nelat, nelong, swlat, swlong, uid)
-    ranked_paths = sorted(paths_to_biz(uid, unvisited_biz), rank)[:11]  # return best 10
-    # ranked_paths = sorted(paths_to_biz(uid, ['15LrCqlaxoKSzwL7dD0bnA']), rank)[:11]  # test call
-    return bizinfo(','.join(map(lambda b: b.end_node.properties['id'], ranked_paths)))
+    print 'Not Visited Biz %d' % (len(unvisited_biz),)
+    ranked_paths = sorted(paths_to_biz(uid, unvisited_biz), rank)[:10]  # return best 10
+    return jsonify({"paths": [path_info(p) for p in ranked_paths]})
+    # ranked_paths = sorted(paths_to_biz(uid, ['15LrCqlaxoKSzwL7dD0bnA']), rank)[:10]  # test call
+    # test return statement below
+    # return jsonify({"paths":[[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2013,2014,2015],"fans":6,"id":"hGvHc3YnSvAgUhSGEum5cA","name":"Mo"}},{"props":{"stars":4},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Food","Donuts","Coffee & Tea"],"id":"FuykdWajbSDj0hBY5DIuZQ","name":"Dunkin' Donuts"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2013,2014,2015],"fans":48,"id":"RsUNADZTrJ5xFXVMXJC1MQ","name":"Doug"}},{"props":{"stars":2},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Burgers","Fast Food","Restaurants"],"id":"LYLGCIqNQQrpMwOxJ1hlrg","name":"Smashburger"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2014,2015],"fans":7,"id":"1CGI66n0zKnK_mpMkdYkQQ","name":"Megan"}},{"props":{"stars":4},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Bars","Food","Breweries","Pubs","Nightlife","American (New)","Restaurants"],"id":"JokKtdXU7zXHcr20Lrk29A","name":"Four Peaks Brewing Co"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2013,2014,2015],"fans":48,"id":"RsUNADZTrJ5xFXVMXJC1MQ","name":"Doug"}},{"props":{"stars":4},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Pizza","Restaurants"],"id":"X1iWMwX_f9FJkyd-xcHVgA","name":"My Pie"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2009,2010,2011,2012,2013,2014,2015],"fans":63,"id":"hFtlFksrcLaWHGPNa6SmeA","name":"Samantha"}},{"props":{"stars":5},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Food","Coffee & Tea"],"id":"XIXxWu5FJaiDc7tdmePoVg","name":"Dutch Bros Coffee"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2010,2011,2012,2013,2014,2015],"fans":29,"id":"aTi0NVrcPJWbN6jAsJVcAw","name":"Donna"}},{"props":{"stars":4},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Sporting Goods","Fashion","Shopping","Sports Wear"],"id":"c7WYnjVpI7Qr87G6RvFQkA","name":"Campus Corner - Closed"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2013,2015],"fans":8,"id":"Xz1w0h7wDI22IZKi-CnrHA","name":"Karina"}},{"props":{"stars":3},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Bars","Mexican","Nightlife","Lounges","Restaurants"],"id":"ZtJRkaNF6OnSyQJLa5W1cQ","name":"Tapacubo"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2014,2015],"fans":7,"id":"1CGI66n0zKnK_mpMkdYkQQ","name":"Megan"}},{"props":{"stars":5},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Food","Breakfast & Brunch","American (New)","Coffee & Tea","Restaurants"],"id":"EXtCgZoxHNjXrqPCFOgQmQ","name":"D'lish"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2010,2011,2012,2013,2014,2015],"fans":21,"id":"XTFE2ERq7YvaqGUgQYzVNA","name":"Kate"}},{"props":{"stars":1},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Gluten-Free","Asian Fusion","Chinese","Restaurants"],"id":"xcOncADGPr9eki8OU5Ln7g","name":"P.F. Chang's"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2014,2015],"fans":7,"id":"1CGI66n0zKnK_mpMkdYkQQ","name":"Megan"}},{"props":{"stars":4},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Breakfast & Brunch","Mexican","Sandwiches","Restaurants"],"id":"1zDCfNgtfyh-Uw8j3JxhHA","name":"Los Favoritos Tacos Shop"}}],[{"labels":["Person"],"props":{"elite":[2015],"fans":6,"id":"2AGGIi5EiVLM1XhBXaaAVw","name":"Art"}},{"props":{},"type":"FRIEND"},{"labels":["Person"],"props":{"elite":[2014,2015],"fans":22,"id":"Wh5pL_iTBOj3R4W7cJWEkw","name":"Kazi"}},{"props":{"stars":2},"type":"REVIEWED"},{"labels":["Business"],"props":{"categories":["Food","Coffee & Tea"],"id":"lktu5JPDlQUG-7cV7gOzDQ","name":"Cartel Coffee Lab"}}]]})
+
+
+def path_info(path):
+    nodes = [{"props": n.properties, 'labels': [l for l in n.labels]} for n in path.nodes]
+    relations = [{"props": n.properties, 'type': n.type} for n in path.rels]
+    return merge_lists(nodes, relations)
+
+
+def merge_lists(list1, list2):
+    """
+    Merges two lists in an alternate way
+    [1, 2, 3] + [4, 5] => [1, 4, 2, 5, 3]
+    Borrowed from : http://stackoverflow.com/a/3678938/1585523
+    :param list1: a list of objects which the result starts from, occupies in the odd spots
+    :param list2: a list of objects, occupies even spots
+    :return: alternating combined list of list1 and list2
+    """
+    result = [None] * (len(list1) + len(list2))
+    result[::2] = list1
+    result[1::2] = list2
+    return result
 
 
 def rank(p1, p2):
@@ -171,6 +196,7 @@ def cursor_tojson(cursor, key):
 
 
 if __name__ == '__main__':
+    http.socket_timeout = 9999
     secrets.dev()  # set dev environment settings
     db = MongoClient().yelpdata
     graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password']))

@@ -1,25 +1,47 @@
 {% extends "index.html" %}
 {% block title %}Naive approach{% endblock %}
 {% block content %}
+    {% raw %}
     <div ng-app="rec">
         <div ng-controller="recController">
+            <div class="alert alert-info" role="alert" ng-bind-html="alertMsg"></div>
             <form class="form-inline">
                 <div class="form-group">
                     <label for="user">User</label>
                     <input type="text" style="width: 300px;" class="form-control" id="user" ng-model="user"
                            placeholder="User ID" autofocus>
                 </div>
-                <button type="button" class="btn btn-primary" ng-click="markVisited()">(1) See Visited</button>
+                <button type="button" class="btn btn-primary" ng-click="markVisited()">(1) Fetch Visited Places</button>
             </form>
             <br/>
-            <form>
-                <h2>(2) Mark region of interest</h2>
-                <div class="form-group" id="map_canvas" style="height: 500px;"></div>
-                <button type="button" class="btn btn-success" ng-click="handleFormSubmit()">(3) Recommend</button>
-            </form>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>(2) Mark region of interest</h5>
+                    <div class="form-group" id="map_canvas" style="height: 500px;"></div>
+                    <button type="button" class="btn btn-success" ng-click="handleFormSubmit()">(3) Recommend</button>
+                </div>
+                <div class="col-md-6">
+                    <h5>(4) Recommendations</h5>
+                    <ol>
+                        <li ng-repeat="reco in recommendations">
+                            <a ng-repeat="node in reco" rel='popover' tabindex="0" class="btn btn-link" role="button"
+                               style="padding: 0;"
+                               title="{{ popUpTitle(node) }}" data-content="{{ popUpContent(node) }}">
+                                {{ nodeDisplay(node)}}
+                            </a>
+                        </li>
+                    </ol>
+                </div>
+            </div>
         </div>
     </div>
+    {% endraw %}
+
+
     <script type="text/javascript" src="/static/node_modules/angular/angular.min.js"></script>
+    <script type="text/javascript" src="/static/node_modules/angular-sanitize/angular-sanitize.min.js"></script>
+    <script type="text/javascript" src="/static/node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script type="text/javascript"
             src="https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&v=3.exp&signed_in=false&libraries=visualization,drawing"></script>
     <script type="text/javascript">
@@ -43,16 +65,65 @@
         }
     </script>
     <script type="text/javascript">
-        (function () {
-            let app = angular.module('rec', []);
+        (function (angular, $) {
+            let app = angular.module('rec', ['ngSanitize']);
             let l = new Logger()
-            const defaults = {
-                showMap: true,
-                formBtn: 'Submit'
-            }
             app.controller('recController', function ($scope, $http) {
-                $scope.settings = defaults;
                 $scope.user = '2AGGIi5EiVLM1XhBXaaAVw';
+                $scope.alertMsg = 'Hi!';
+
+                $scope.stringit = function (s) {
+                    return JSON.stringify(s);
+                }
+
+                $scope.nodeDisplay = function (node) {
+                    if (node.props.name)
+                        return node.props.name;
+                    else
+                        return ` -[${node.type}]-> `;
+                }
+
+                $scope.popUpContent = function (node) {
+                    if (node.props.name) {
+                        if (node.labels.indexOf('Person') >= 0) {
+                            // Person
+                            return `<strong>Node Type</strong>: Person <br/> <strong>Fans</strong>: ${node.props.fans} <br/> <strong>Years as an elite</strong>: ${node.props.elite.join(', ')} <br/>`
+                        }
+                        else {
+                            // Business
+                            return `<strong>Node Type</strong>: Business <br/> <strong>Type of business</strong>: ${node.props.categories.join(', ')} <br/>`
+                        }
+                    }
+                    else {
+                        // Relation
+                        if (node.type === 'FRIEND') {
+                            // FRIEND relationship
+                            return '<strong>A -[FRIEND]-> B</strong><br /><em>This means, A is a friend of B</em>'
+                        }
+                        else {
+                            // Review relationship
+                            return `<strong>Stars</strong>: ${node.props.stars}<br /><strong>A -[REVIEWED]-> B</strong><br /><em>This means, A visited business B and rated it</em>`
+                        }
+                    }
+                }
+
+                $scope.popUpTitle = function (node) {
+                    if (node.props.name) {
+                        // Person or Business
+                        return node.props.name
+                    }
+                    else {
+                        // Relation
+                        if (node.type === 'FRIEND') {
+                            // FRIEND relationship
+                            return 'A friend of'
+                        }
+                        else {
+                            // Review relationship
+                            return 'Rating'
+                        }
+                    }
+                }
 
                 $scope.markVisited = function () {
                     let url = `/${$scope.user}/reviews`
@@ -68,22 +139,43 @@
                     let config = {
                         params: getRegionBounds(R)
                     }
-                    $http.get(url, config).success(function (businesses) {
-                        // list of business objects if returned
-                        addMarkers(businesses.about, false, recommendedBusinessMarkerImage, recommendedBusinessMarkerShape);
+                    $scope.alertMsg = `At ${new Date()} started working...`
+                    $http.get(url, config).success(function (recommendations) {
+                        // list of paths where each path is a list of nodes and relationships
+                        $scope.recommendations = recommendations.paths;
+                        $scope.alertMsg += `<br />Here the best ${recommendations.paths.length} recommendations. <br />At ${new Date()} finished working...`
+
+                        // Gather recommended businesses and mark them on map
+                        // let biz = recommendations.paths.map(p => p[p.length - 1].props.id) // PyCharm doesnt support ES2015
+                        let biz = recommendations.paths.map(function (p) {
+                            return p[p.length - 1].props.id;
+                        });
+                        $scope.markBusinesses(biz);
                     }).error(function (data) {
                         l.error({message: 'Error recommending businesses for a user', data: data});
                     })
                 }
 
                 $scope.handleFormSubmit = function () {
-                    if (R) {
-                        $scope.recommend();
-                    }
-                    else {
-                        $scope.markVisited();
-                    }
+                    R ? $scope.recommend() : $scope.markVisited()
                 }
+
+                $scope.markBusinesses = function (bids) {
+                    let url = `/${bids.join(',')}/info`
+                    $http.get(url).success(function (businesses) {
+                        addMarkers(businesses.about, false, recommendedBusinessMarkerImage, recommendedBusinessMarkerShape);
+                    }).error(function (data) {
+                        l.error({message: 'Error adding recommended businesses to the map', data: data});
+                    });
+
+                }
+            });
+
+            $("body").popover({
+                selector: '[rel="popover"]',
+                placement: 'top',
+                trigger: 'hover',
+                html: true
             });
 
             // Google Map Setup
@@ -155,6 +247,8 @@
             function addMarkers(businesses, clearExisting=true, image=null, shape=null) {
                 if (clearExisting)
                     clearMarkers();
+                if (businesses.length == 0)
+                    return;
                 let bounds = new google.maps.LatLngBounds();
                 for (let b of businesses) {
                     let marker = new google.maps.Marker({
@@ -199,8 +293,7 @@
                 }
                 return data;
             }
-        })();
+        })(window.angular, window.$);
     </script>
-
 
 {% endblock %}
