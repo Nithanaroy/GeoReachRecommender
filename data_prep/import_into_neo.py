@@ -98,6 +98,6 @@ def main(user, business, review, graph):
 if __name__ == '__main__':
     http.socket_timeout = 9999
 
-    secrets.dev()
-    graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password'],))
+    secrets.env()()  # set environment settings
+    graph = Graph(os.environ['neo_db_url'])
     main('../dataset/user.json', '../dataset/business.json', '../dataset/review_train.json', graph)

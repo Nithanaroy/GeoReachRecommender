@@ -135,6 +135,8 @@
                 }
 
                 $scope.recommend = function () {
+                    if ($scope.user.trim().length == 0)
+                        return;
                     let url = `/${$scope.user}/recommend`;
                     let config = {
                         params: getRegionBounds(R)
@@ -161,6 +163,8 @@
                 }
 
                 $scope.markBusinesses = function (bids) {
+                    if (bids.length == 0)
+                        return;
                     let url = `/${bids.join(',')}/info`
                     $http.get(url).success(function (businesses) {
                         addMarkers(businesses.about, false, recommendedBusinessMarkerImage, recommendedBusinessMarkerShape);

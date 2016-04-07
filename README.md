@@ -19,8 +19,12 @@ businesses on Yelp.
 - Start Python Flask server
 - Perform Queries!
 
-Before we begin, rename `secrets_template.py` to `secrets.py` and fill in your values. Otherwise the code
-will not run.
+Before we begin,
+
+- Rename `secrets_template.py` to `secrets.py` and fill in your values. Otherwise the code
+will not run. Remember to submit this file also to your hosting server (manually if required)
+as this not included as part of your GIT repo
+- Include the project in `PYTHONPATH` by `export PYTHONPATH=${PYTHONPATH}:/<YOUR_PATH>`
 
 ###Import data into MongoDB and Neo4J
 ####Mongo Setup
@@ -45,19 +49,14 @@ Let us check if everything works by issuing a box query on `business` collection
 })`
 
 
-
-**Import Reviews**
-
-
-
 ####Train and Test data
 We will use reviews to test the accuracy of our system. Split the review.json file which has roughly 2 million
 lines/reviews into train and test data. For this you can use the script train_test_split.py in the `data_prep` folder.
 
 ####Neo4J Setup
 Use the script `import_into_neo.py` to import users, businesses, relationships among users and 
-relationships between users and businesses. Make necessary changes to connect to right DB and chunk 
-size (in the `insert()` method). Start with an empty database to avoid duplicates. 
+relationships between users and businesses. Change chunk size (in the `insert()` method) from 200 
+to any number based on your server & network power. Start with an empty database to avoid duplicates. 
 
 
 ###Start Flask Server

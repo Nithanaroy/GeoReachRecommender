@@ -197,7 +197,7 @@ def cursor_tojson(cursor, key):
 
 if __name__ == '__main__':
     http.socket_timeout = 9999
-    secrets.dev()  # set dev environment settings
-    db = MongoClient().yelpdata
-    graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password']))
-    app.run(debug=True)
+    secrets.env()()  # set environment settings
+    db = MongoClient(os.environ['mongo_connection_url']).yelpdata
+    graph = Graph(os.environ['neo_db_url'])
+    app.run(debug=os.environ['debug_server'] is "True")
