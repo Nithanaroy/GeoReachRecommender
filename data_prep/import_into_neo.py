@@ -9,6 +9,7 @@ For linking both these graphs we use review.json
 import json, time, gc
 from py2neo import Graph
 from py2neo.packages.httpstream import http
+import os, secrets
 
 
 def insert(graph, f, insert_query, unwind_key):
@@ -37,31 +38,31 @@ def main(user, business, review, graph):
     """
     print 'Started at %s' % (time.time())
 
-    # # Create User Nodes
-    # with open(user, 'r') as u:
-    #     insert_query = """
-    #         UNWIND {users} as u
-    #         CREATE (:Person {id: u['user_id'], name: u['name'], fans: u['fans'], elite: u['elite']});
-    #         """
-    #     num_users = insert(graph, u, insert_query, 'users')
-    #     index_query = """
-    #     CREATE INDEX ON :Person(id)
-    #     """
-    #     graph.cypher.execute(index_query)
-    #     print '\tCreated %d Users Nodes by %s' % (num_users, time.time())
-    #
-    # # Create Business Nodes
-    # with open(business, 'r') as b:
-    #     insert_query = """
-    #         UNWIND {biz} as b
-    #         CREATE (:Business {id: b['business_id'], name: b['name'], categories: b['categories']});
-    #         """
-    #     num_biz = insert(graph, b, insert_query, 'biz')
-    #     index_query = """
-    #     CREATE INDEX ON :Business(id)
-    #     """
-    #     graph.cypher.execute(index_query)
-    #     print '\tCreated %d Business Nodes by %s' % (num_biz, time.time())
+    # Create User Nodes
+    with open(user, 'r') as u:
+        insert_query = """
+            UNWIND {users} as u
+            CREATE (:Person {id: u['user_id'], name: u['name'], fans: u['fans'], elite: u['elite']});
+            """
+        num_users = insert(graph, u, insert_query, 'users')
+        index_query = """
+        CREATE INDEX ON :Person(id)
+        """
+        graph.cypher.execute(index_query)
+        print '\tCreated %d Users Nodes by %s' % (num_users, time.time())
+
+    # Create Business Nodes
+    with open(business, 'r') as b:
+        insert_query = """
+            UNWIND {biz} as b
+            CREATE (:Business {id: b['business_id'], name: b['name'], categories: b['categories']});
+            """
+        num_biz = insert(graph, b, insert_query, 'biz')
+        index_query = """
+        CREATE INDEX ON :Business(id)
+        """
+        graph.cypher.execute(index_query)
+        print '\tCreated %d Business Nodes by %s' % (num_biz, time.time())
 
     # Create relationships between businesses and users
     with open(review, 'r') as r:
@@ -97,5 +98,6 @@ def main(user, business, review, graph):
 if __name__ == '__main__':
     http.socket_timeout = 9999
 
-    graph = Graph("http://neo4j:1234@localhost:7474/db/data/")  # TODO: Get from environment
+    secrets.dev()
+    graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password'],))
     main('../dataset/user.json', '../dataset/business.json', '../dataset/review_train.json', graph)

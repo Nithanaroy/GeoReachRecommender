@@ -143,7 +143,7 @@
                     $http.get(url, config).success(function (recommendations) {
                         // list of paths where each path is a list of nodes and relationships
                         $scope.recommendations = recommendations.paths;
-                        $scope.alertMsg += `<br />Here the best ${recommendations.paths.length} recommendations. <br />At ${new Date()} finished working...`
+                        $scope.alertMsg += `<br />Here are the best ${recommendations.paths.length} recommendations. <br />At ${new Date()} finished working...`
 
                         // Gather recommended businesses and mark them on map
                         // let biz = recommendations.paths.map(p => p[p.length - 1].props.id) // PyCharm doesnt support ES2015
