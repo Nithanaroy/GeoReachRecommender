@@ -9,17 +9,20 @@ For linking both these graphs we use review.json
 import json, time, gc
 from py2neo import Graph
 from py2neo.packages.httpstream import http
-import os, secrets
+import secrets, os
 
 
 def insert(graph, f, insert_query, unwind_key):
+    tx = graph.cypher.begin()
     entities = map(lambda x: json.loads(x), f.read().splitlines())
     print 'Completed JSON Loads at %s' % (time.time(),)
     x = 0
     while x < len(entities):
-        graph.cypher.execute(insert_query, {unwind_key: entities[x:x + 200]})
+        tx.append(insert_query, {unwind_key: entities[x:x + 200]})
         x = min(x + 200, len(entities))
+        tx.process()
         # print '\tSaved %d entities at %s' % (x, time.time())
+    tx.commit()
 
     count = len(entities)
     entities = None  # for GC
@@ -48,7 +51,9 @@ def main(user, business, review, graph):
         index_query = """
         CREATE INDEX ON :Person(id)
         """
-        graph.cypher.execute(index_query)
+        tx = graph.cypher.begin()
+        tx.append(index_query)
+        tx.commit()
         print '\tCreated %d Users Nodes by %s' % (num_users, time.time())
 
     # Create Business Nodes
@@ -61,7 +66,9 @@ def main(user, business, review, graph):
         index_query = """
         CREATE INDEX ON :Business(id)
         """
-        graph.cypher.execute(index_query)
+        tx = graph.cypher.begin()
+        tx.append(index_query)
+        tx.commit()
         print '\tCreated %d Business Nodes by %s' % (num_biz, time.time())
 
     # Create relationships between businesses and users
@@ -77,6 +84,7 @@ def main(user, business, review, graph):
 
     # Create relationships among users
     with open(user, 'r') as f:
+        tx = graph.cypher.begin()
         users = map(lambda x: json.loads(x), f.read().splitlines())
         friends = []
         for u in users:
@@ -90,14 +98,17 @@ def main(user, business, review, graph):
             MATCH (p:Person {id: f[0]}), (q:Person {id: f[1]})
             MERGE (p)-[:FRIEND]-(q);
             """
-            graph.cypher.execute(insert_query, {"friends": friends[x:x + 1000]})
+            tx.append(insert_query, {"friends": friends[x:x + 1000]})
+            tx.process()
             x = min(x + 1000, len(friends))
         print '\tCreated %d relations at %s' % (len(friends), time.time())
+        tx.commit()
 
 
 if __name__ == '__main__':
     http.socket_timeout = 9999
 
     secrets.dev()
-    graph = Graph("http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password'],))
+    graph = Graph(
+        "http://neo4j:%s@localhost:7474/db/data/" % (os.environ['neo_db_password'],))
     main('../dataset/user.json', '../dataset/business.json', '../dataset/review_train.json', graph)
