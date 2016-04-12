@@ -63,3 +63,10 @@ to any number based on your server & network power. Start with an empty database
 
 Obtain a Google Maps API key and set its value to an environment variable, `maps_api_key`. Install required node
 modules by running `npm install` in the `static/` folder.
+
+
+##Tech Stack
+
+- Python Flask, Jinja2 for Backend
+- MongoDB and Neo4J Databases 
+- ECMA 2015 for front end

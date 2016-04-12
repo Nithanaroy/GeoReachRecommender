@@ -1,30 +1,93 @@
 {% extends "index.html" %}
 {% block title %}Naive approach{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+            font-size: 16px;
+            overflow: hidden;
+        }
+
+        #left, #right {
+            height: 75px;
+            margin-top: 10px;
+            border: 0;
+            outline: 0;
+            margin-right: 2px;
+            border-radius: 0;
+        }
+
+        /* Borrowed */
+        html, body {
+            height: 100%;
+        }
+
+        .container-fluid {
+            margin: 0 auto;
+            height: 100%;
+            padding: 0;
+
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .columns {
+            background-color: #C9E6FF;
+            height: 100%;
+        }
+
+        .content-area, .article-tree {
+            background: #bada55;
+            overflow: auto;
+            height: 100%;
+        }
+
+        .footer {
+            background: red;
+            height: 20px;
+        }
+
+    </style>
+{% endblock %}
 {% block content %}
     {% raw %}
-    <div ng-app="rec">
-        <div ng-controller="recController">
-            <div class="alert alert-info" role="alert" ng-bind-html="alertMsg"></div>
-            <form class="form-inline">
-                <div class="form-group">
-                    <label for="user">User</label>
-                    <input type="text" style="width: 300px;" class="form-control" id="user" ng-model="user"
-                           placeholder="User ID" autofocus>
-                </div>
-                <button type="button" class="btn btn-primary" ng-click="markVisited()">(1) Fetch Visited Places</button>
-            </form>
-            <br/>
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>(2) Mark region of interest</h5>
-                    <div class="form-group" id="map_canvas" style="height: 500px;"></div>
-                    <button type="button" class="btn btn-success" ng-click="handleFormSubmit()">(3) Recommend</button>
-                </div>
-                <div class="col-md-6">
-                    <h5>(4) Recommendations</h5>
+    <div ng-app="rec" class="row-fluid columns content">
+        <div ng-controller="recController" class="span12 content-area">
+            <div class="center span12" id="map_canvas" style="height: 100%;"></div>
+
+            <div id="log_container" style="position: absolute; width: 534px; top: 0; left: 0;">
+                <button id="left" type="button" class="btn btn-default btn-sm pull-right">
+                    <span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span>
+                </button>
+                <button id="right" type="button" class="btn btn-default btn-sm pull-right"
+                        style="display: none;">
+                    <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
+                </button>
+
+                <div style="width: 500px; padding: 15px; height: 100%; overflow-y: scroll; background: #FFF; box-shadow: 0 0 20px rgba(0,0,0,0.3);"
+                     class="pull-left">
+                    <div class="alert alert-info" role="alert" ng-bind-html="alertMsg"></div>
+                    <form class="form-inline" style="margin-bottom: 8px;">
+                        <div class="form-group">
+                            <label for="user">(1) User</label>
+                            <input type="text" style="width: 225px;" title="Enter User ID" class="form-control" id="user" ng-model="user"
+                                   placeholder="User ID" autofocus>
+                        </div>
+                        <button type="button" class="btn btn-default" ng-click="markVisited()">Fetch Visited Places
+                        </button>
+                    </form>
+
+                    <p>(2) Mark region of interest on the map</p>
+
+                    <p><a href="#" role="button" ng-click="handleFormSubmit()">(3) Recommend</a></p>
+
+                    <p>(4) Recommendations</p>
                     <ol>
                         <li ng-repeat="reco in recommendations">
-                            <a ng-repeat="node in reco" rel='popover' tabindex="0" class="btn btn-link" role="button"
+                            <a ng-repeat="node in reco" rel='popover' tabindex="0" class="btn btn-link"
+                               role="button"
                                style="padding: 0;"
                                title="{{ popUpTitle(node) }}" data-content="{{ popUpContent(node) }}">
                                 {{ nodeDisplay(node)}}
@@ -70,7 +133,7 @@
             let l = new Logger()
             app.controller('recController', function ($scope, $http) {
                 $scope.user = '2AGGIi5EiVLM1XhBXaaAVw';
-                $scope.alertMsg = 'Hi!';
+                $scope.alertMsg = 'Follow steps below to find recommendations for any user';
 
                 $scope.stringit = function (s) {
                     return JSON.stringify(s);
@@ -184,7 +247,7 @@
 
             // Google Map Setup
             const mapOptions = {
-                zoom: 2,
+                zoom: 3,
                 center: new google.maps.LatLng(33.504220229503886, -112.19151860546874),
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 disableDoubleClickZoom: true // This event is used to remove a rectangle / query window
@@ -297,6 +360,37 @@
                 }
                 return data;
             }
+
+            /**
+             * Panel Management and initialization CSS
+             */
+            $(".btn").on("click", function () {
+                var id = $(this).attr("id");
+                if (id === "left") {
+                    hidePanel();
+                }
+                else if (id === 'right') {
+                    showPanel();
+                }
+            });
+
+            function hidePanel() {
+                $("#log_container").animate({left: -500}, 200, "swing");
+                $("#left").hide();
+                $("#right").show();
+            }
+
+            function showPanel() {
+                $("#log_container").animate({left: 0}, 200, "swing");
+                $("#left").show();
+                $("#right").hide();
+            }
+
+            $("#map_canvas, #log_container").css({height: $(document).height()})
+
+            $(window).on('resize', function () {
+                $("#map_canvas, #log_container").css({height: $(document).height()})
+            });
         })(window.angular, window.$);
     </script>
 

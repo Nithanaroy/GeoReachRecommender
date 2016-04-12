@@ -4,12 +4,10 @@ from pymongo import MongoClient
 from py2neo import Graph
 from bson.json_util import dumps
 from html_services import html_api
-from flask.ext.triangle import Triangle
 import secrets
 from py2neo.packages.httpstream import http
 
 app = Flask(__name__)
-Triangle(app)
 app.register_blueprint(html_api)
 
 
@@ -198,6 +196,7 @@ def cursor_tojson(cursor, key):
 if __name__ == '__main__':
     http.socket_timeout = 9999
     secrets.env()()  # set environment settings
-    db = MongoClient(os.environ['mongo_connection_url']).yelpdata
-    graph = Graph(os.environ['neo_db_url'])
-    app.run(debug=os.environ['debug_server'] is "True")
+    with MongoClient(os.environ['mongo_connection_url']) as connection:
+        db = connection.yelpdata
+        graph = Graph(os.environ['neo_db_url'])
+        app.run(debug=os.environ['debug_server'] is "True")
