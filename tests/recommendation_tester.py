@@ -49,10 +49,13 @@ def save_ranked_paths(inp, out):
         with open(out, 'w') as o:
             for i, line in enumerate(f):
                 print 'Line number: {} ({})'.format(i, time.time())
-                paths = json.loads(line)['paths']
+                json_line = json.loads(line)
+                paths = json_line['paths']
                 for p in paths:
                     paths_values[key_for_path(p)] = value_of_path(p)
-                o.write(json.dumps(sorted(paths, rank, reverse=True)) + '\n')
+                output = {'user': json_line['user'], 'region': json_line['region'],
+                          'paths': sorted(paths, rank, reverse=True), 'paths_values': paths_values}
+                o.write(json.dumps(output) + '\n')
 
 
 def key_for_path(p):
@@ -104,7 +107,7 @@ def get_social_strength(p):
     for fid, count in graph.cypher.execute(query, {'me': me, 'friends': friends}):
         total_common_reviews += count
         common_reviews[fid] = count
-    weighted_sum = 0
+    weighted_sum = 0.0
     for index, friend in enumerate(friends):
         # line equation => social_strength(y) = # friends(m) - distance_in_the_path_from_me(x)
         weighted_sum += common_reviews[friend['props']['id']] * (len(friends) - index)
@@ -123,7 +126,7 @@ def get_popularity(p):
     :param p: Path
     :return: normalized weighted sum, [0, 1]
     """
-    weighted_sum = 0
+    weighted_sum = 0.0
     total_fans = 0
     # path includes both relations and nodes. exclude the 1st (viz. user of interest) and the last node (viz. business)
     friends = friends_in_path(p)
