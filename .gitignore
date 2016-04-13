@@ -167,3 +167,5 @@ ENV/
 dataset/
 secrets.py
 static/node_modules/
+tests/*.json
+tests/*.csv
