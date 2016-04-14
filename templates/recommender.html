@@ -72,7 +72,8 @@
                     <form class="form-inline" style="margin-bottom: 8px;">
                         <div class="form-group">
                             <label for="user">(1) User</label>
-                            <input type="text" style="width: 225px;" title="Enter User ID" class="form-control" id="user" ng-model="user"
+                            <input type="text" style="width: 225px;" title="Enter User ID" class="form-control"
+                                   id="user" ng-model="user"
                                    placeholder="User ID" autofocus>
                         </div>
                         <button type="button" class="btn btn-default" ng-click="markVisited()">Fetch Visited Places
@@ -94,6 +95,9 @@
                             </a>
                         </li>
                     </ol>
+
+                    <!-- This button is to loop over an array of users and view their reviews on the map -->
+                    <!-- <button class="btn btn-default" ng-click="reviewsByNextUser()">Next User >></button> -->
                 </div>
             </div>
         </div>
@@ -135,16 +139,25 @@
                 $scope.user = '2AGGIi5EiVLM1XhBXaaAVw';
                 $scope.alertMsg = 'Follow steps below to find recommendations for any user';
 
-                $scope.stringit = function (s) {
-                    return JSON.stringify(s);
-                }
+                // $scope.users and $scope.uindex quickly allows to explore a list of user's reviews on the map
+                // The trigger is Next button which loops over $scope.users array
+                // Be sure to call the right API in the $scope.markVisited() function
+                $scope.users = ['Iu3Jo9ROp2IWC9FwtWOaUQ', '9A2-wSoBUxlMd3LwmlGrrQ', 'glRXVWWD6x1EZKfjJawTOg', 'DrWLhrK8WMZf7Jb-Oqc7ww', 'ia1nTRAQEaFWv0cwADeK7g', '3gIfcQq5KxAegwCPXc83cQ', 'uZbTb-u-GVjTa2gtQfry5g', '5lq4LkrviYgQ4LJNsBYHcA', 'WmAyExqSWoiYZ5XEqpk_Uw', 'AaZdXn0I6F5bdIVwGpxdDA', 'nKoB5cWZHXYUIUcQsUDogA', 'spJUPXI7QaIctU0FO5c42w', '-ANkfLbDf8aiBQ7vywIL6w', 'fczQCSmaWF78toLEmb0Zsw', '0IAOkW3KD1Dsx2hnwb0CSA', 'neOOSMNWcVL0o2Xwb0goVg', 'kGgAARL2UmvCcTRfiscjug', 'saiZmxzBIowJbMgPBW1Now']
+                $scope.uindex = 0;
+                $scope.reviewsByNextUser = function () {
+                    if ($scope.uindex < $scope.users.length) {
+                        $scope.user = $scope.users[$scope.uindex];
+                        $scope.markVisited();
+                        $scope.uindex += 1;
+                    }
+                };
 
                 $scope.nodeDisplay = function (node) {
                     if (node.props.name)
                         return node.props.name;
                     else
                         return ` -[${node.type}]-> `;
-                }
+                };
 
                 $scope.popUpContent = function (node) {
                     if (node.props.name) {

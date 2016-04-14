@@ -61,6 +61,19 @@ def reviews(uid):
     return cursor_tojson(businesses, 'reviewed')
 
 
+@app.route('/<uid>/reviews_test')
+def reviews_test(uid):
+    """
+    Fetches the list of businesses the user has reviewed from the test dataset
+    Each `biz_obj` below has at least _id, name, location [longitude, latitude], stars
+    :param uid: id of the user as a string
+    :return: {reviewed: [{biz_obj}, {biz_obj}...]}
+    """
+    bids = [b['business_id'] for b in db.reviews_test.find({'user_id': uid}, {'business_id': 1, '_id': 0})]
+    businesses = db.business.find({"_id": {"$in": bids}})
+    return cursor_tojson(businesses, 'reviewed')
+
+
 @app.route('/<uid>/recommend')
 def recommend(uid):
     """
