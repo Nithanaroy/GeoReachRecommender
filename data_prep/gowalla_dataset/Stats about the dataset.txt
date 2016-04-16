@@ -1,0 +1,4 @@
+Person Nodes - 196,591
+Social Edges - 1,900,654
+Business Nodes - 1,169,889
+Checkins (train) - 5,154,313
