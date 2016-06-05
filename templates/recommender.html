@@ -68,6 +68,10 @@
 
                 <div style="width: 500px; padding: 15px; height: 100%; overflow-y: scroll; background: #FFF; box-shadow: 0 0 20px rgba(0,0,0,0.3);"
                      class="pull-left">
+                    <button type="button" class="btn btn-default" ng-click="fetchBusinessesClick()">Places in Region
+                    </button>
+
+                    <hr/>
                     <div class="alert alert-info" role="alert" ng-bind-html="alertMsg"></div>
                     <form class="form-inline" style="margin-bottom: 8px;">
                         <div class="form-group">
@@ -134,7 +138,7 @@
     <script type="text/javascript">
         (function (angular, $) {
             let app = angular.module('rec', ['ngSanitize']);
-            let l = new Logger()
+            let l = new Logger();
             app.controller('recController', function ($scope, $http) {
                 $scope.user = '2AGGIi5EiVLM1XhBXaaAVw';
                 $scope.alertMsg = 'Follow steps below to find recommendations for any user';
@@ -181,7 +185,7 @@
                             return `<strong>Stars</strong>: ${node.props.stars}<br /><strong>A -[REVIEWED]-> B</strong><br /><em>This means, A visited business B and rated it</em>`
                         }
                     }
-                }
+                };
 
                 $scope.popUpTitle = function (node) {
                     if (node.props.name) {
@@ -199,16 +203,27 @@
                             return 'Rating'
                         }
                     }
-                }
+                };
 
                 $scope.markVisited = function () {
-                    let url = `/${$scope.user}/reviews`
+                    let url = `/${$scope.user}/reviews`;
                     $http.get(url).success(function (data) {
                         addMarkers(data.reviewed);
                     }).error(function (data) {
                         l.error({message: 'Error during fetching reviewed businesses for a user', data: data});
                     })
-                }
+                };
+
+                $scope.fetchBusinessesClick = function () {
+                    let url = '/business';
+                    let boundsForR = getRegionBounds(R);
+                    $http.get(url, {params: boundsForR}).success(function (data) {
+                        addMarkers(data['bids']);
+                        l.info({message: `Found ${data['bids'].length} businesses in ${boundsForR}`});
+                    }).error(function (data) {
+                        l.error({message: 'Error while fetching businesses in a region', data: data});
+                    })
+                };
 
                 $scope.recommend = function () {
                     if ($scope.user.trim().length == 0)
@@ -216,7 +231,7 @@
                     let url = `/${$scope.user}/recommend`;
                     let config = {
                         params: getRegionBounds(R)
-                    }
+                    };
                     $scope.alertMsg = `At ${new Date()} started working...`
                     $http.get(url, config).success(function (recommendations) {
                         // list of paths where each path is a list of nodes and relationships
@@ -232,16 +247,16 @@
                     }).error(function (data) {
                         l.error({message: 'Error recommending businesses for a user', data: data});
                     })
-                }
+                };
 
                 $scope.handleFormSubmit = function () {
                     R ? $scope.recommend() : $scope.markVisited()
-                }
+                };
 
                 $scope.markBusinesses = function (bids) {
                     if (bids.length == 0)
                         return;
-                    let url = `/${bids.join(',')}/info`
+                    let url = `/${bids.join(',')}/info`;
                     $http.get(url).success(function (businesses) {
                         addMarkers(businesses.about, false, recommendedBusinessMarkerImage, recommendedBusinessMarkerShape);
                     }).error(function (data) {
@@ -310,7 +325,7 @@
                 type: 'poly'
             };
 
-            let markers = []
+            let markers = [];
             let infowindow = new google.maps.InfoWindow({
                 content: ''
             });
@@ -399,7 +414,7 @@
                 $("#right").hide();
             }
 
-            $("#map_canvas, #log_container").css({height: $(document).height()})
+            $("#map_canvas, #log_container").css({height: $(document).height()});
 
             $(window).on('resize', function () {
                 $("#map_canvas, #log_container").css({height: $(document).height()})
